@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SSB Scrap Collector</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+        (function () {
+            var isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true ||
+                window.location.search.indexOf('source=pwa') !== -1;
+            if (isPWA) {
+                var v = document.querySelector('meta[name="viewport"]');
+                if (v) v.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover';
+                document.documentElement.style.zoom = '1';
+            }
+        })();
+    </script>
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1b4332">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SSB Scrap">
+
+    <link rel="apple-touch-icon" href="./logo.png">
+
+    <style>
+        /* ---------- GENERAL ---------- */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+            background: #e0e5ec;
+            color: #333;
+            transition: background 0.3s ease;
+            padding-bottom: 60px;
+            /* Space for install banner */
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .page {
+            display: none;
+            padding: 40px 20px;
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #2d6a4f, #1b4332);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(45, 106, 79, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        input:not([type="checkbox"]),
+        textarea,
+        select {
+            padding: 12px;
+            width: min(280px, calc(100% - 20px));
+            margin: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-family: inherit;
+            transition: border 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        input[type="checkbox"] {
+            width: 20px !important;
+            height: 20px !important;
+            margin: 5px !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            appearance: auto !important;
+            -webkit-appearance: checkbox !important;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #2d6a4f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+        }
+
+        /* ---------- HEADER ---------- */
+        header {
+            background: linear-gradient(90deg, #1b4332, #2d6a4f);
+            color: white;
+            padding: 18px clamp(12px, 4vw, 40px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header h2 {
+            margin: 0;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        header div {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* ---------- ALERT ---------- */
+        .alertBar {
+            background: #fab005;
+            color: #222;
+            font-weight: 600;
+            overflow: hidden;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .alertBar span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll 12s linear infinite;
+        }
+
+        @keyframes scroll {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-100%);
+            }
+        }
+
+        .alert-item {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* ---------- ITEMS ---------- */
+        .items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .itemCard {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .itemCard:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .itemCard.selected {
+            border-color: #2d6a4f;
+            background-color: #f0fff4;
+        }
+
+        .itemCard h3 {
+            margin: 10px 0 5px;
+            color: #333;
+        }
+
+        .itemCard p {
+            color: #555;
+            font-weight: 500;
+        }
+
+        /* ---------- QUANTITY LIST ---------- */
+        #quantityList {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            display: inline-block;
+            text-align: left;
+            min-width: 0;
+            width: min(100%, 600px);
+            max-width: 600px;
+        }
+
+        #quantityList input[type="checkbox"] {
+            -webkit-appearance: checkbox !important;
+            appearance: checkbox !important;
+            width: 18px !important;
+            height: 18px !important;
+            display: inline-block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: relative !important;
+        }
+
+        /* ---------- ADMIN ---------- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+
+        .modalBox {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        #adminPanel input,
+        #adminPanel select {
+            margin: 5px;
+        }
+
+        #installBanner {
+            display: none;
+            position: fixed;
+            top: 80px;
+            /* Just below the header */
+            right: 20px;
+            /* Aligned to right */
+            width: auto;
+            max-width: 220px;
+            /* Small compact box */
+            background: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            animation: bannerFadeIn 0.5s ease-out;
+        }
+
+        #navBar {
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .page {
+                padding: 24px 12px;
+            }
+
+            .items {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
+            #quantityList {
+                padding: 16px;
+            }
+
+            #installBanner {
+                top: 70px;
+                right: 12px;
+                max-width: min(220px, calc(100vw - 24px));
+            }
+
+            button {
+                width: min(100%, 320px);
+            }
+        }
+
+        @media (max-width: 420px) {
+            header h2 {
+                font-size: 20px;
+            }
+
+            header div {
+                font-size: 13px;
+            }
+        }
+
+        @keyframes bannerFadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #installBanner::after {
+            content: "";
+            /* Little arrow pointing up */
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            border-width: 0 10px 10px 10px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+        }
+
+        #installBanner button {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding: 6px 15px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #installBanner .close {
+            position: absolute;
+            top: 5px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #bbb;
+        }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <h2 ondblclick="openAdmin()">SSB Scrap Collector</h2>
+        <div>📞 6303466495</div>
+    </header>
+
+    <div id="installBanner">
+        <span class="close" onclick="closeInstall()">&times;</span>
+        <p id="installText" style="margin: 0; padding-bottom: 5px; font-size: 14px;">📲 Install App for easier access!
+        </p>
+        <button id="installBtn" onclick="installApp()">Install App</button>
+    </div>
+
+    <div id="navBar" class="hidden" style="display:none; justify-content:flex-end; padding:10px 20px; gap:10px;">
+        <button id="navHome" onclick="showPage('page1')"
+            style="margin:0; padding:8px 15px; font-size:14px; background:#95a5a6;">Home</button>
+        <button id="navBack" onclick="showPage('page2')"
+            style="margin:0; padding:8px 15px; font-size:14px; background:#3498db;">Back</button>
+    </div>
+
+    <div id="alertBar" class="alertBar hidden"></div>
+    <div id="noteBox" class="noteBox hidden"></div>
+
+    <!-- PAGE 1 -->
+    <section id="page1" class="page active">
+        <h1>Check Scrap Prices</h1>
+        <p>Enter mobile number to view live prices</p>
+        <input id="mobile" placeholder="Mobile Number">
+        <br>
+        <button onclick="checkMobile()">Check Prices</button>
+    </section>
+
+    <!-- PAGE 2 -->
+    <section id="page2" class="page">
+        <h1>Select Items</h1>
+        <div id="itemsList" class="items"></div>
+        <button onclick="goToQuantity()">Next</button>
+    </section>
+
+    <!-- PAGE 3 -->
+    <section id="page3" class="page">
+        <h1>Enter Quantity</h1>
+        <div id="quantityList"></div>
+        <h2 id="total">Total: ₹0</h2>
+
+        <div style="margin: 20px 0;">
+            <input id="userLocation" placeholder="Enter your full address/location" style="width: 80%;">
+        </div>
+
+        <div class="noteBox" style="margin:20px 0;">
+            📞 6303466495<br>📍 Marpuristreet,Madanapalli,517325
+        </div>
+
+        <button onclick="sendWhatsApp()">Send Request</button>
+    </section>
+
+    <!-- ADMIN LOGIN -->
+    <div id="adminModal" class="modal">
+        <div class="modalBox">
+            <h3>Admin Login</h3>
+            <input type="email" id="adminEmail" placeholder="Admin Email">
+            <br>
+            <input type="password" id="adminPass" placeholder="Password">
+            <br>
+            <p id="loginError" style="color:#e74c3c; font-size:13px; margin:6px 0 0; display:none;"></p>
+            <button onclick="checkAdmin()">Login</button>
+            <button onclick="document.getElementById('adminModal').style.display='none'"
+                style="background:#95a5a6; margin-left:8px;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <section id="adminPanel" class="page">
+        <h1>Admin Dashboard</h1>
+        <button onclick="adminLogout()"
+            style="background:#e74c3c; float:right; margin-top:0; padding:8px 18px; font-size:13px;">Logout</button>
+        <div style="clear:both;"></div>
+        <div id="adminItems"></div>
+        <button onclick="savePrices()">Save Prices</button>
+
+        <hr>
+        <h3>Add Item</h3>
+        <input id="newItemName" placeholder="Item Name">
+        <input id="newItemPrice" placeholder="Price">
+        <select id="newItemType">
+            <option value="kg">Kg</option>
+            <option value="piece">Piece</option>
+        </select>
+        <br><button onclick="addNewItem()">Add</button>
+
+        <hr>
+        <h3>ADD Announcement</h3>
+        <input id="alertInput" placeholder="Scrolling alert text" style="width:80%;">
+        <div
+            style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:10px 0; padding:10px; background:#f8f9fa; border-radius:8px;">
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Text Color: <input type="color"
+                    id="alertColor" value="#000000"
+                    style="width:40px; height:30px; padding:2px; border:1px solid #ddd; border-radius:4px; cursor:pointer;"></label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Bg Color: <input type="color"
+                    id="alertBg" value="#fab005"
+                    style="width:40px; height:30px; padding:2px; border:1px solid #ddd; border-radius:4px; cursor:pointer;"></label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Font:
+                <select id="alertFont" style="width:auto; margin:0; padding:5px 8px;">
+                    <option value="Poppins, sans-serif">Poppins</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                </select></label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Style:
+                <select id="alertStyle" style="width:auto; margin:0; padding:5px 8px;">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="italic">Italic</option>
+                    <option value="bold italic">Bold Italic</option>
+                </select></label>
+        </div>
+        <button onclick="addAlert()">Add Alert</button>
+        <div id="adminAlertList"
+            style="margin-top:10px; max-height:220px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:5px;">
+        </div>
+
+        <hr>
+        <h3>ADD Note</h3>
+        <textarea id="noteInput" placeholder="Note text" style="width:80%;"></textarea>
+        <div
+            style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:10px 0; padding:10px; background:#f8f9fa; border-radius:8px;">
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Text Color: <input type="color"
+                    id="noteColor" value="#333333"
+                    style="width:40px; height:30px; padding:2px; border:1px solid #ddd; border-radius:4px; cursor:pointer;"></label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Bg Color: <input type="color"
+                    id="noteBg" value="#e7f5ff"
+                    style="width:40px; height:30px; padding:2px; border:1px solid #ddd; border-radius:4px; cursor:pointer;"></label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Font:
+                <select id="noteFont" style="width:auto; margin:0; padding:5px 8px;">
+                    <option value="Poppins, sans-serif">Poppins</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                </select></label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:5px;">Style:
+                <select id="noteStyle" style="width:auto; margin:0; padding:5px 8px;">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="italic">Italic</option>
+                    <option value="bold italic">Bold Italic</option>
+                </select></label>
+        </div>
+        <button onclick="addNote()">Add Note</button>
+        <div id="adminNoteList"
+            style="margin-top:10px; max-height:220px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:5px;">
+        </div>
+
+        <hr>
+        <button onclick="showPage('page1')">Return to Home</button>
+    </section>
+
+    <script>
+        /* ---------- FIREBASE CONFIG ---------- */
+        const firebaseConfig = {
+            apiKey: "AIzaSyDd1unbueL9VyllBjMBPLZOmo7hSjCVTyY",
+            authDomain: "ssb1-cb138.firebaseapp.com",
+            databaseURL: "https://ssb1-cb138-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ssb1-cb138",
+            storageBucket: "ssb1-cb138.firebasestorage.app",
+            messagingSenderId: "1038194431108",
+            appId: "1:1038194431108:web:a4814bd8a984a0c662ded1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        /* ---------- DATA ---------- */
+        let items = [
+            { name: "Newspaper", price: 12, type: "kg" },
+            { name: "Iron", price: 32, type: "kg" },
+            { name: "Plastic", price: 18, type: "kg" },
+            { name: "Fan", price: 150, type: "piece" }
+        ];
+
+        // Load from localStorage as instant offline cache
+        let cachedPrices = localStorage.getItem("scrapPrices");
+        if (cachedPrices) items = JSON.parse(cachedPrices);
+
+        let selectedItems = {};
+
+        /* ---------- PAGE CONTROL ---------- */
+        function showPage(id) {
+            document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+            document.getElementById(id).classList.add("active");
+
+            let bar = document.getElementById("alertBar");
+            let box = document.getElementById("noteBox");
+            let nav = document.getElementById("navBar");
+
+            if (!nav) return;
+            let backBtn = document.getElementById("navBack");
+
+            if (id === "page1") {
+                if (alerts.length > 0) bar.classList.remove("hidden");
+                if (notes.length > 0) box.classList.remove("hidden");
+                nav.classList.add("hidden");
+                nav.style.display = "none";
+            } else {
+                bar.classList.add("hidden");
+                box.classList.add("hidden");
+                nav.classList.remove("hidden");
+                nav.style.display = "flex";
+
+                if (id === "page2") {
+                    backBtn.style.display = "none";
+                } else if (id === "page3") {
+                    backBtn.style.display = "block";
+                    backBtn.innerText = "Select Items";
+                    backBtn.onclick = function () { showPage('page2'); };
+                } else {
+                    nav.style.display = "none";
+                }
+            }
+        }
+
+        /* ---------- CUSTOMER FLOW ---------- */
+        function checkMobile() {
+            let m = document.getElementById("mobile").value;
+            if (m.length < 10) return alert("Enter valid mobile");
+            loadItems(); showPage("page2");
+        }
+
+        function loadItems() {
+            let list = document.getElementById("itemsList"); list.innerHTML = "";
+            items.forEach((item, i) => {
+                let isSelected = selectedItems.hasOwnProperty(i);
+                list.innerHTML += `<div class="itemCard ${isSelected ? 'selected' : ''}" onclick="toggleSelection(${i})">
+    <h3>${item.name}</h3>
+    <p>₹${item.price}/${item.type}</p>
+    <input type="checkbox" id="chk${i}" onclick="event.stopPropagation(); toggleItem(${i}, this)" 
+        ${isSelected ? 'checked' : ''}>
+    </div>`;
+            });
+        }
+
+        function toggleSelection(i) {
+            let c = document.getElementById("chk" + i);
+            c.checked = !c.checked;
+            let card = c.parentElement;
+
+            if (c.checked) {
+                selectedItems[i] = 0;
+                if (card) card.classList.add('selected');
+            } else {
+                delete selectedItems[i];
+                if (card) card.classList.remove('selected');
+            }
+        }
+
+        function toggleItem(i, c) {
+            let card = c.closest('.itemCard');
+            if (c.checked) {
+                selectedItems[i] = 0;
+                if (card) card.classList.add('selected');
+            } else {
+                delete selectedItems[i];
+                if (card) card.classList.remove('selected');
+            }
+        }
+
+        function goToQuantity() {
+            let box = document.getElementById("quantityList");
+            box.innerHTML = "";
+
+            for (let i in selectedItems) {
+                let it = items[i];
+
+                let rowDiv = document.createElement("div");
+                rowDiv.style.cssText = "margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #ddd;";
+
+                let nameDiv = document.createElement("div");
+                nameDiv.style.cssText = "font-weight:600; margin-bottom:10px; color:#333; font-size:16px;";
+                nameDiv.textContent = it.name + " (" + it.type + ")";
+                rowDiv.appendChild(nameDiv);
+
+                let flexDiv = document.createElement("div");
+                flexDiv.style.cssText = "display:flex; align-items:center; gap:15px; flex-wrap:wrap;";
+
+                let qtyInput = document.createElement("input");
+                qtyInput.type = "number";
+                qtyInput.id = "qty" + i;
+                qtyInput.placeholder = "Enter Quantity";
+                qtyInput.style.cssText = "width:150px; padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px;";
+                qtyInput.oninput = function () { calcTotal(i, this.value); };
+                flexDiv.appendChild(qtyInput);
+
+                let checkboxDiv = document.createElement("div");
+                checkboxDiv.style.cssText = "display:flex; align-items:center; background:#f8f9fa; padding:8px 12px; border-radius:5px; border:1px solid #ddd; cursor:pointer;";
+
+                let checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = "dk" + i;
+                checkbox.style.cssText = "width:18px; height:18px; margin:0 8px 0 0; cursor:pointer;";
+                checkbox.onchange = function () { toggleDK(i, this); };
+                checkboxDiv.appendChild(checkbox);
+
+                let labelSpan = document.createElement("span");
+                labelSpan.textContent = "Don't Know";
+                labelSpan.style.cssText = "font-size:14px; font-weight:600; color:#e74c3c; user-select:none;";
+                checkboxDiv.appendChild(labelSpan);
+
+                checkboxDiv.onclick = function (e) {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        toggleDK(i, checkbox);
+                    }
+                };
+
+                flexDiv.appendChild(checkboxDiv);
+                rowDiv.appendChild(flexDiv);
+                box.appendChild(rowDiv);
+            }
+
+            showPage("page3");
+        }
+
+        function toggleDK(i, checkbox) {
+            let input = document.getElementById("qty" + i);
+            if (checkbox.checked) {
+                input.value = "";
+                input.disabled = true;
+                input.style.background = "#f0f0f0";
+                selectedItems[i] = "DK";
+            } else {
+                input.disabled = false;
+                input.style.background = "white";
+                selectedItems[i] = 0;
+            }
+            calcTotal();
+        }
+
+        function calcTotal(i, v) {
+            if (i !== undefined && v !== undefined) {
+                selectedItems[i] = parseFloat(v) || 0;
+            }
+
+            let total = 0;
+            let hasDK = false;
+
+            for (let x in selectedItems) {
+                if (selectedItems[x] === "DK") {
+                    hasDK = true;
+                } else {
+                    total += selectedItems[x] * items[x].price;
+                }
+            }
+
+            let totalText = "Total: ₹" + total;
+            if (hasDK) totalText += " (approx)";
+            document.getElementById("total").innerText = totalText;
+        }
+
+        function sendWhatsApp() {
+            let mobile = document.getElementById("mobile").value;
+            let location = document.getElementById("userLocation").value;
+
+            if (!location || location.trim() === "") {
+                alert("Please enter your location/address before sending the request.");
+                return;
+            }
+
+            let msg = `*SSB Scrap Collector - Pickup Request*\n\n`;
+            msg += `*ITEMS LIST:*\n`;
+            let hasItems = false;
+            for (let i in selectedItems) {
+                if (selectedItems[i] === "DK") {
+                    msg += `- ${items[i].name}: Quantity Unknown (DK)\n`;
+                    hasItems = true;
+                } else if (selectedItems[i] > 0) {
+                    msg += `- ${items[i].name}: ${selectedItems[i]} ${items[i].type}\n`;
+                    hasItems = true;
+                }
+            }
+
+            if (!hasItems) {
+                alert("Please enter quantity or select 'Don't Know' for at least one item.");
+                return;
+            }
+
+            let totalText = document.getElementById("total").innerText;
+            msg += `\n*ESTIMATED AMOUNT:*\n${totalText}\n\n`;
+
+            msg += `*CUSTOMER DETAILS:*\n`;
+            msg += `Mobile:  ${mobile}\n`;
+            msg += `Location:  ${location}\n`;
+
+            window.open(`https://wa.me/916303466495?text=${encodeURIComponent(msg)}`);
+        }
+
+        /* ---------- ADMIN ---------- */
+        function openAdmin() { document.getElementById("adminModal").style.display = "flex"; }
+
+        function checkAdmin() {
+            let email = document.getElementById("adminEmail").value.trim();
+            let pass = document.getElementById("adminPass").value;
+            let errEl = document.getElementById("loginError");
+            errEl.style.display = "none";
+            if (!email || !pass) {
+                errEl.innerText = "Enter email and password.";
+                errEl.style.display = "block";
+                return;
+            }
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    document.getElementById("adminModal").style.display = "none";
+                    document.getElementById("adminEmail").value = "";
+                    document.getElementById("adminPass").value = "";
+                    loadAdminPanel();
+                    showPage("adminPanel");
+                })
+                .catch((err) => {
+                    errEl.innerText = "Login failed: " + err.message;
+                    errEl.style.display = "block";
+                });
+        }
+
+        function adminLogout() {
+            auth.signOut().then(() => { showPage("page1"); });
+        }
+
+        function loadAdminPanel() {
+            let box = document.getElementById("adminItems"); box.innerHTML = "";
+            items.forEach((it, i) => {
+                box.innerHTML += `${it.name}: <input type="number" value="${it.price}" id="p${i}"><br>`;
+            });
+            renderAdminLists();
+        }
+
+        function savePrices() {
+            items.forEach((it, i) => it.price = parseFloat(document.getElementById("p" + i).value));
+            db.ref('scrapPrices').set(items);
+            localStorage.setItem("scrapPrices", JSON.stringify(items));
+            alert("Saved"); showPage("page1");
+        }
+
+        function addNewItem() {
+            let n = document.getElementById("newItemName").value;
+            let p = document.getElementById("newItemPrice").value;
+            let t = document.getElementById("newItemType").value;
+            if (!n.trim() || !p) return alert("Enter item name and price");
+            items.push({ name: n, price: parseFloat(p), type: t });
+            db.ref('scrapPrices').set(items);
+            localStorage.setItem("scrapPrices", JSON.stringify(items));
+            document.getElementById("newItemName").value = "";
+            document.getElementById("newItemPrice").value = "";
+            loadAdminPanel(); alert("Item Added");
+        }
+
+        let alerts = [];
+        let notes = [];
+
+        // Seed from localStorage cache for instant offline display
+        let cachedAlerts = localStorage.getItem("shopAlerts");
+        if (cachedAlerts) alerts = JSON.parse(cachedAlerts);
+        let cachedNotes = localStorage.getItem("shopNotes");
+        if (cachedNotes) notes = JSON.parse(cachedNotes);
+
+        function addAlert() {
+            let txt = document.getElementById("alertInput");
+            if (!txt.value.trim()) return;
+
+            let color = document.getElementById("alertColor").value;
+            let bg = document.getElementById("alertBg").value;
+            let font = document.getElementById("alertFont").value;
+            let style = document.getElementById("alertStyle").value;
+
+            alerts.push({ text: txt.value, color: color, bg: bg, style: style, font: font });
+            db.ref('shopAlerts').set(alerts);
+            localStorage.setItem("shopAlerts", JSON.stringify(alerts));
+
+            txt.value = "";
+            document.getElementById("alertColor").value = "#000000";
+            document.getElementById("alertBg").value = "#fab005";
+            document.getElementById("alertFont").selectedIndex = 0;
+            document.getElementById("alertStyle").selectedIndex = 0;
+
+            renderAdminLists();
+            showAlerts();
+        }
+
+        function addNote() {
+            let txt = document.getElementById("noteInput");
+            if (!txt.value.trim()) return;
+
+            let color = document.getElementById("noteColor").value;
+            let bg = document.getElementById("noteBg").value;
+            let font = document.getElementById("noteFont").value;
+            let style = document.getElementById("noteStyle").value;
+
+            notes.push({ text: txt.value, color: color, bg: bg, style: style, font: font });
+            db.ref('shopNotes').set(notes);
+            localStorage.setItem("shopNotes", JSON.stringify(notes));
+
+            txt.value = "";
+            document.getElementById("noteColor").value = "#333333";
+            document.getElementById("noteBg").value = "#e7f5ff";
+            document.getElementById("noteFont").selectedIndex = 0;
+            document.getElementById("noteStyle").selectedIndex = 0;
+
+            renderAdminLists();
+            showNotes();
+        }
+
+        function deleteAlert(i) {
+            if (confirm("Delete alert?")) {
+                alerts.splice(i, 1);
+                db.ref('shopAlerts').set(alerts);
+                localStorage.setItem("shopAlerts", JSON.stringify(alerts));
+                renderAdminLists();
+                showAlerts();
+            }
+        }
+
+        function deleteNote(i) {
+            if (confirm("Delete note?")) {
+                notes.splice(i, 1);
+                db.ref('shopNotes').set(notes);
+                localStorage.setItem("shopNotes", JSON.stringify(notes));
+                renderAdminLists();
+                showNotes();
+            }
+        }
+
+        function renderAdminLists() {
+            let alertList = document.getElementById("adminAlertList");
+            alertList.innerHTML = "";
+            alerts.forEach((a, i) => {
+                alertList.innerHTML += `
+        <div style="background:${a.bg}; color:${a.color}; border:1px solid #ccc; margin:5px 0; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="flex-grow:1;">${a.text}</span>
+            <button onclick="deleteAlert(${i})" style="background:#e74c3c; margin:0; padding:5px 10px; font-size:12px;">Delete</button>
+        </div>`;
+            });
+
+            let noteList = document.getElementById("adminNoteList");
+            noteList.innerHTML = "";
+            notes.forEach((n, i) => {
+                noteList.innerHTML += `
+        <div style="background:${n.bg}; color:${n.color}; border:1px solid #ccc; margin:5px 0; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="flex-grow:1;">${n.text}</span>
+            <button onclick="deleteNote(${i})" style="background:#e74c3c; margin:0; padding:5px 10px; font-size:12px;">Delete</button>
+        </div>`;
+            });
+        }
+
+        function showAlerts() {
+            let bar = document.getElementById("alertBar");
+            bar.innerHTML = "";
+
+            if (alerts.length > 0) {
+                bar.classList.remove("hidden");
+                bar.style.padding = "0";
+                bar.style.background = "transparent";
+
+                alerts.forEach(a => {
+                    let div = document.createElement("div");
+                    div.style.background = a.bg;
+                    div.style.color = a.color;
+                    div.style.padding = "8px";
+                    div.style.overflow = "hidden";
+                    div.style.whiteSpace = "nowrap";
+                    div.style.fontFamily = a.font || "inherit";
+                    div.style.fontWeight = (a.style === "bold" || a.style === "bold italic") ? "bold" : "normal";
+                    div.style.fontStyle = (a.style === "italic" || a.style === "bold italic") ? "italic" : "normal";
+                    div.classList.add("alert-item");
+                    div.innerHTML = `<span style="display:inline-block; padding-left:100%; animation:scroll 12s linear infinite;">${a.text}</span>`;
+                    bar.appendChild(div);
+                });
+            } else {
+                bar.classList.add("hidden");
+            }
+        }
+
+        function showNotes() {
+            let box = document.getElementById("noteBox");
+            if (!box) return;
+            box.innerHTML = "";
+            box.style.background = "transparent";
+            box.style.border = "none";
+            box.style.padding = "0";
+
+            if (notes.length > 0) {
+                box.classList.remove("hidden");
+                notes.forEach(n => {
+                    let div = document.createElement("div");
+                    div.style.background = n.bg;
+                    div.style.color = n.color;
+                    div.style.padding = "10px";
+                    div.style.margin = "10px 0";
+                    div.style.borderRadius = "4px";
+                    div.style.borderLeft = "5px solid #1971c2";
+                    div.style.fontFamily = n.font || "inherit";
+                    div.style.fontWeight = (n.style === "bold" || n.style === "bold italic") ? "bold" : "normal";
+                    div.style.fontStyle = (n.style === "italic" || n.style === "bold italic") ? "italic" : "normal";
+                    div.innerText = n.text;
+                    box.appendChild(div);
+                });
+            } else {
+                box.classList.add("hidden");
+            }
+        }
+
+        // Show cached data immediately
+        showAlerts();
+        showNotes();
+
+        /* ---------- FIREBASE LIVE LISTENERS ---------- */
+        db.ref('scrapPrices').on('value', (snap) => {
+            if (snap.exists()) {
+                items = snap.val();
+                localStorage.setItem("scrapPrices", JSON.stringify(items));
+            }
+        });
+
+        db.ref('shopAlerts').on('value', (snap) => {
+            alerts = snap.exists() ? snap.val() : [];
+            localStorage.setItem("shopAlerts", JSON.stringify(alerts));
+            showAlerts();
+            if (document.getElementById("adminPanel").classList.contains("active")) renderAdminLists();
+        });
+
+        db.ref('shopNotes').on('value', (snap) => {
+            notes = snap.exists() ? snap.val() : [];
+            localStorage.setItem("shopNotes", JSON.stringify(notes));
+            showNotes();
+            if (document.getElementById("adminPanel").classList.contains("active")) renderAdminLists();
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('SW Registered'))
+                .catch((err) => console.log('SW Failed', err));
+        }
+
+        let deferredPrompt;
+        const installBanner = document.getElementById("installBanner");
+        const installBtn = document.getElementById("installBtn");
+        const installText = document.getElementById("installText");
+
+        const isRunningStandalone =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!isRunningStandalone) {
+                installBanner.style.display = "block";
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBanner.style.display = "none";
+            deferredPrompt = null;
+            console.log('PWA installed successfully');
+        });
+
+        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+        if (isIos && !isRunningStandalone) {
+            installBanner.style.display = "block";
+            installText.innerText = "To install: Tap Share ⬆️ then 'Add to Home Screen'";
+            installBtn.style.display = "none";
+        }
+
+        function installApp() {
+            installBanner.style.display = "none";
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        function closeInstall() {
+            installBanner.style.display = "none";
+        }
+
+    </script>
+</body>
+
+</html>
