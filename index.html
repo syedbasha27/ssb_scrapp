@@ -100,10 +100,10 @@
         }
 
         /* ---------- TYPOGRAPHY (fluid) ---------- */
-        h1 { font-size: clamp(20px, 5vw, 32px); margin-bottom: 8px; }
-        h2 { font-size: clamp(17px, 4vw, 26px); }
-        h3 { font-size: clamp(15px, 3.5vw, 20px); }
-        p  { font-size: clamp(13px, 2.5vw, 16px); }
+        h1 { font-size: clamp(22px, 5.5vw, 36px); margin-bottom: 8px; }
+        h2 { font-size: clamp(19px, 4.5vw, 30px); }
+        h3 { font-size: clamp(17px, 4vw, 23px); }
+        p  { font-size: clamp(15px, 3vw, 18px); }
 
         /* ---------- BUTTONS ---------- */
         button {
@@ -115,7 +115,7 @@
             cursor: pointer;
             margin-top: 20px;
             font-weight: 600;
-            font-size: clamp(13px, 2.5vw, 15px);
+            font-size: clamp(15px, 3vw, 17px);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.2s ease;
             touch-action: manipulation;
@@ -144,7 +144,7 @@
             border-radius: 8px;
             border: 1px solid #ddd;
             font-family: inherit;
-            font-size: clamp(13px, 2.5vw, 15px);
+            font-size: clamp(15px, 3vw, 17px);
             transition: border 0.2s, box-shadow 0.2s;
             outline: none;
             background: white;
@@ -199,11 +199,11 @@
             font-weight: 700;
             cursor: pointer;
             letter-spacing: 0.5px;
-            font-size: clamp(17px, 4vw, 24px);
+            font-size: clamp(19px, 4.5vw, 26px);
         }
 
         header div {
-            font-size: clamp(12px, 2.5vw, 14px);
+            font-size: clamp(14px, 3vw, 16px);
             opacity: 0.9;
         }
 
@@ -264,13 +264,13 @@
         .itemCard h3 {
             margin: 8px 0 4px;
             color: #333;
-            font-size: clamp(13px, 3vw, 16px);
+            font-size: clamp(15px, 3.5vw, 18px);
         }
 
         .itemCard p {
             color: #555;
             font-weight: 500;
-            font-size: clamp(12px, 2.5vw, 14px);
+            font-size: clamp(14px, 3vw, 16px);
         }
 
         /* ---------- QUANTITY LIST ---------- */
@@ -445,7 +445,7 @@
 
         #navBar button {
             margin: 0;
-            font-size: clamp(12px, 2.5vw, 14px);
+            font-size: clamp(14px, 3vw, 16px);
             padding: 8px clamp(12px, 2.5vw, 18px);
             width: auto !important;
         }
@@ -1118,8 +1118,9 @@
         function showAlerts() {
             let bar = document.getElementById("alertBar");
             bar.innerHTML = "";
+            let onPage1 = document.getElementById("page1").classList.contains("active");
             if (alerts.length > 0) {
-                bar.classList.remove("hidden");
+                if (onPage1) bar.classList.remove("hidden");
                 bar.style.padding = "0";
                 bar.style.background = "transparent";
                 alerts.forEach(a => {
@@ -1146,8 +1147,9 @@
             if (!box) return;
             box.innerHTML = "";
             box.style.cssText = "background:transparent; border:none; padding:0;";
+            let onPage1 = document.getElementById("page1").classList.contains("active");
             if (notes.length > 0) {
-                box.classList.remove("hidden");
+                if (onPage1) box.classList.remove("hidden");
                 notes.forEach(n => {
                     let div = document.createElement("div");
                     div.style.background = n.bg;
@@ -1159,7 +1161,7 @@
                     div.style.fontFamily = n.font || "inherit";
                     div.style.fontWeight = (n.style === "bold" || n.style === "bold italic") ? "bold" : "normal";
                     div.style.fontStyle = (n.style === "italic" || n.style === "bold italic") ? "italic" : "normal";
-                    div.style.fontSize = "clamp(13px, 2.5vw, 15px)";
+                    div.style.fontSize = "clamp(15px, 3vw, 17px)";
                     div.innerText = n.text;
                     box.appendChild(div);
                 });
@@ -1177,6 +1179,7 @@
                 items = snap.val();
                 localStorage.setItem("scrapPrices", JSON.stringify(items));
                 if (document.getElementById("adminPanel").classList.contains("active")) loadAdminPanel();
+                if (document.getElementById("page2").classList.contains("active")) loadItems();
             }
         });
 
