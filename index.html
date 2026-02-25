@@ -823,7 +823,6 @@
             items.forEach((it, i) => it.price = parseFloat(document.getElementById("p" + i).value));
             db.ref('scrapPrices').set(items);
             localStorage.setItem("scrapPrices", JSON.stringify(items));
-            alert("Saved"); showPage("page1");
         }
 
         function addNewItem() {
@@ -836,7 +835,7 @@
             localStorage.setItem("scrapPrices", JSON.stringify(items));
             document.getElementById("newItemName").value = "";
             document.getElementById("newItemPrice").value = "";
-            loadAdminPanel(); alert("Item Added");
+            loadAdminPanel();
         }
 
         let alerts = [];
@@ -1002,6 +1001,7 @@
             if (snap.exists()) {
                 items = snap.val();
                 localStorage.setItem("scrapPrices", JSON.stringify(items));
+                if (document.getElementById("adminPanel").classList.contains("active")) loadAdminPanel();
             }
         });
 
