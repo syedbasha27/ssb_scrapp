@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ssb-scrap-v1.0.0.12';
+const CACHE_NAME = 'ssb-scrap-v1.0.0.123';
 const APP_SHELL = [
   './',
   './index.html',
@@ -60,5 +60,6 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
 
 
